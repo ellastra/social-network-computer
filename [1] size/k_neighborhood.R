@@ -2,7 +2,7 @@
 # Social Network Size (Local): K-Neighborhood
 
 # Required Helper(s)
-# - Directed/Undirected Adjacency List Builder (refer to adjacency_list.R)
+# - Graph Builder (refer to graph_processing.R)
 # Functions: one_neighborhood, two_neighborhood
 
 # Output: 
@@ -12,17 +12,11 @@
 
 # ------------------------------------------
 # 1. One neighborhood
-# step 1. get directed/undirected adjacency list
+# step 1. access precomputed adjacency lists from g
 # step 2. count number of friends of each ego
 # ------------------------------------------
 
-one_neighborhood <- function(edges,
-                             from = "from",
-                             to   = "to",
-                             nodes = NULL,
-                             drop_self_loops = TRUE) {
-  g <- adj_builder(edges, from, to, nodes, drop_self_loops)
-  
+one_neighborhood <- function(g) {
   data.frame(
     nid    = g$nodes,
     k1_in  = as.integer(lengths(g$adj_in)),
@@ -36,19 +30,13 @@ one_neighborhood <- function(edges,
 
 # ------------------------------------------
 # 2. Two neighborhood
-# step 1. get directed/undirected adjacency list
+# step 1. access precomputed adjacency lists from g
 # step 2. count number of friends of each ego
 # step 3. count number of friends' friends using 2-step counter
 # ------------------------------------------
 
-two_neighborhood <- function(edges,
-                             from = "from",
-                             to   = "to",
-                             nodes = NULL,
-                             drop_self_loops = TRUE) {
-  g <- adj_builder(edges, from, to, nodes, drop_self_loops)
+two_neighborhood <- function(g) {
   
-
   step_length2 <- function(adj_list, i) {
     n1 <- adj_list[[i]] #i's 1-step neighbors
     if (length(n1) == 0L) return(character(0))
@@ -56,7 +44,7 @@ two_neighborhood <- function(edges,
     n2_list <- adj_list[g$idx[n1]] #i's 2-step neighbors
     acc <- unique(c(n1, unlist(n2_list, use.names = FALSE)))
     
-    acc[acc != g$nodes[i]] # Ego 제외
+    acc[acc != g$nodes[i]] 
   }
   
   data.frame(
