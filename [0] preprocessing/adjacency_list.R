@@ -2,11 +2,12 @@
 # Adjacency List Builder
 
 # Creates Directed/Undirected Adjacency List
-# Output: adj_out, adj_in, adj_all, adj_un
+
+# Function: adj_builder
+# Output: adj_in, adj_out, adj_all, adj_un
 # ==========================================
 
-
-build_adjacency <- function(edges,
+adj_builder <- function(edges,
                             from = "from",
                             to   = "to",
                             nodes = NULL,
@@ -80,8 +81,8 @@ build_adjacency <- function(edges,
   list(
     nodes = nodes,
     idx   = idx,
-    adj_out = adj_out,
     adj_in  = adj_in,
+    adj_out = adj_out,
     adj_all = adj_all,
     adj_un  = adj_un
   )

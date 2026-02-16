@@ -1,10 +1,11 @@
 # ==========================================
 # Social Network Size (Local): K-Neighborhood
 
-# Required Helper: Directed/Undirected Adjacency List Builder (refer to adjacency_list.R)
+# Required Helper(s)
+# - Directed/Undirected Adjacency List Builder (refer to adjacency_list.R)
 # Functions: one_neighborhood, two_neighborhood
 
-# Variables: 
+# Output: 
 # - one_neighborhood: k1_in, k1_out, k1_all, k1_un
 # - two_neighborhood: k2_in, k2_out, k2_all, k2_un
 # ==========================================
@@ -20,7 +21,7 @@ one_neighborhood <- function(edges,
                              to   = "to",
                              nodes = NULL,
                              drop_self_loops = TRUE) {
-  g <- build_adjacency(edges, from, to, nodes, drop_self_loops)
+  g <- adj_builder(edges, from, to, nodes, drop_self_loops)
   
   data.frame(
     nid    = g$nodes,
@@ -37,7 +38,7 @@ one_neighborhood <- function(edges,
 # 2. Two neighborhood
 # step 1. get directed/undirected adjacency list
 # step 2. count number of friends of each ego
-# step 3. count number of friends' friends using length 2 breath-first search
+# step 3. count number of friends' friends using 2-step counter
 # ------------------------------------------
 
 two_neighborhood <- function(edges,
@@ -45,41 +46,25 @@ two_neighborhood <- function(edges,
                              to   = "to",
                              nodes = NULL,
                              drop_self_loops = TRUE) {
-  g <- build_adjacency(edges, from, to, nodes, drop_self_loops)
+  g <- adj_builder(edges, from, to, nodes, drop_self_loops)
   
-  step_length2 <- function(adj_list) {
-    n <- length(g$nodes)
-    out <- integer(n)
+
+  step_length2 <- function(adj_list, i) {
+    n1 <- adj_list[[i]] #i's 1-step neighbors
+    if (length(n1) == 0L) return(character(0))
     
-    for (i in seq_len(n)) {
-      n1 <- adj_list[[i]] #i's 1-step neighbors
-      if (length(n1) == 0L) {
-        out[i] <- 0L
-        next
-      }
-      
-      n2 <- n1
-      for (v in n1) {
-        j <- g$idx[[v]] #v's index
-        if (!is.null(j) && !is.na(j)) {
-          nb <- adj_list[[j]] #v's 1-step neighbors (i's 2-step neighbors)
-          if (length(nb) > 0L) n2 <- c(n2, nb)
-        }
-      }
-      
-      u <- unique(n2)
-      u <- u[u != g$nodes[i]]
-      out[i] <- length(u)
-    }
-    out
+    n2_list <- adj_list[g$idx[n1]] #i's 2-step neighbors
+    acc <- unique(c(n1, unlist(n2_list, use.names = FALSE)))
+    
+    acc[acc != g$nodes[i]] # Ego 제외
   }
   
   data.frame(
     nid    = g$nodes,
-    k2_in  = as.integer(step_length2(g$adj_in)),
-    k2_out = as.integer(step_length2(g$adj_out)),
-    k2_all = as.integer(step_length2(g$adj_all)),
-    k2_un  = as.integer(step_length2(g$adj_un)),
+    k2_in  = as.integer(sapply(seq_along(g$nodes), function(i) length(step_length2(g$adj_in, i)))),
+    k2_out = as.integer(sapply(seq_along(g$nodes), function(i) length(step_length2(g$adj_out, i)))),
+    k2_all = as.integer(sapply(seq_along(g$nodes), function(i) length(step_length2(g$adj_all, i)))),
+    k2_un  = as.integer(sapply(seq_along(g$nodes), function(i) length(step_length2(g$adj_un, i)))),
     stringsAsFactors = FALSE
   )
 }
